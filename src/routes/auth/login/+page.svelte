@@ -1,6 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   
+  export let form: any;
+  
   let email = '';
   let password = '';
   let showPassword = false;
@@ -79,6 +81,10 @@
           Sign up
         </button>
       </p>
+
+      {#if form?.message}
+        <div class="mb-4 rounded-lg bg-red-500/10 border border-red-500 text-red-200 px-3 py-2 text-sm">{form.message}</div>
+      {/if}
       
       <!-- Login Form -->
       <form method="post" class="space-y-6">

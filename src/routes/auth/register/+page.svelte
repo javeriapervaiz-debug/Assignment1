@@ -1,5 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { enhance } from '$app/forms';
+  
+  export let form: any;
   
   let firstName = '';
   let lastName = '';
@@ -81,9 +84,13 @@
           Log in
         </button>
       </p>
+
+      {#if form?.message}
+        <div class="mb-4 rounded-lg bg-red-500/10 border border-red-500 text-red-200 px-3 py-2 text-sm">{form.message}</div>
+      {/if}
       
       <!-- Registration Form -->
-      <form method="post" class="space-y-6">
+      <form method="post" use:enhance class="space-y-6">
         <!-- Name Fields -->
         <div class="grid grid-cols-2 gap-4">
           <div>

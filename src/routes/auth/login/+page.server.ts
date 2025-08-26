@@ -9,9 +9,10 @@ export const actions: Actions = {
 
     try {
       await signInWithEmail(event, email, password);
-      throw redirect(302, '/dashboard');
     } catch (err: any) {
       return fail(400, { message: err?.message || 'Invalid credentials' });
     }
+
+    throw redirect(302, '/dashboard');
   }
 };

@@ -1,7 +1,7 @@
 // src/lib/auth.ts
 import { db } from "$lib/db";
 import { sessions, users } from "$lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { randomBytes, pbkdf2Sync } from "crypto";
 import type { RequestEvent } from "@sveltejs/kit";
 
@@ -99,4 +99,43 @@ export async function registerAndSignIn(event: RequestEvent, firstName: string |
     expires
   });
   return user;
+}
+
+export async function updateUserProfile(
+  userId: number,
+  updates: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    password?: string | null;
+    profileImageUrl?: string | null;
+  }
+) {
+  const values: any = {};
+  if (typeof updates.firstName !== "undefined") values.firstName = updates.firstName ?? null;
+  if (typeof updates.lastName !== "undefined") values.lastName = updates.lastName ?? null;
+  if (typeof updates.email !== "undefined") {
+    if (updates.email) {
+      const exists = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.email, updates.email), ne(users.id, userId)));
+      if (exists.length > 0) throw new Error("Email already in use");
+    }
+    values.email = updates.email ?? null;
+  }
+  if (typeof updates.password !== "undefined" && updates.password) {
+    values.passwordHash = hashPassword(updates.password);
+  }
+  if (typeof updates.profileImageUrl !== "undefined") {
+    values.profileImageUrl = updates.profileImageUrl ?? null;
+  }
+  if (Object.keys(values).length === 0) return;
+  await db.update(users).set(values).where(eq(users.id, userId));
+}
+
+export async function deleteUserAccount(event: RequestEvent, userId: number) {
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+  await db.delete(users).where(eq(users.id, userId));
+  event.cookies.delete(SESSION_COOKIE, { path: "/" });
 }
