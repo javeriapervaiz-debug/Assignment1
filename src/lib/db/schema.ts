@@ -1,5 +1,5 @@
 // src/lib/db/schema.ts
-import { pgTable, serial, varchar, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, timestamp, integer, boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -7,7 +7,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name", { length: 120 }),
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-  profileImageUrl: varchar("profile_image_url", { length: 512 }),
+  emailVerifiedAt: timestamp("email_verified_at"),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -16,4 +16,12 @@ export const sessions = pgTable("sessions", {
   userId: integer("user_id").notNull(),
   sessionToken: varchar("session_token", { length: 255 }).notNull().unique(),
   expires: timestamp("expires").notNull()
+});
+
+export const verificationTokens = pgTable("verification_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expires: timestamp("expires").notNull(),
+  type: varchar("type", { length: 50 }).notNull() // 'email' or 'password_reset'
 });

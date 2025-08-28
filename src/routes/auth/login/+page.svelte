@@ -1,5 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { onMount, onDestroy } from 'svelte';
   
   export let form: any;
   
@@ -10,17 +12,39 @@
 
   const leftImageUrl = '/images/pic1.jpg';
   
+  $: verified = $page.url.searchParams.get('verified');
+  
+  // Clear form fields when component mounts
+  onMount(() => {
+    clearForm();
+  });
+  
+  // Clear form fields when component is destroyed
+  onDestroy(() => {
+    clearForm();
+  });
+  
+  // Function to clear all form fields
+  function clearForm() {
+    email = '';
+    password = '';
+    showPassword = false;
+    rememberMe = false;
+  }
+  
   function goToRegister() {
+    clearForm();
     goto('/auth/register');
   }
   
   function goToWebsite() {
+    clearForm();
     goto('/');
   }
 </script>
 
 <svelte:head>
-  <title>Login - AMU</title>
+  <title>Login - CelesteAI</title>
 </svelte:head>
 
 <div class="min-h-screen flex">
@@ -30,14 +54,18 @@
     <div class="absolute inset-0 bg-cover bg-center" style={`background-image: url('${leftImageUrl}')`}></div>
 
     <!-- Color overlay for readability -->
-    <div class="absolute inset-0 bg-gradient-to-br from-purple-900/60 via-purple-800/50 to-gray-900/60"></div>
+    <div class="absolute inset-0" style="background: linear-gradient(to bottom right, rgba(211, 100, 211, 0.7), rgba(31,41,55,0.3));"></div>
+
+
+
+
     
     <!-- Content -->
     <div class="relative z-10 h-full flex flex-col justify-between p-8">
       <!-- Header -->
       <div class="flex justify-between items-start">
         <!-- Logo -->
-        <div class="text-white text-3xl font-bold tracking-wider">AMU</div>
+        <div class="text-white text-3xl font-bold tracking-wider">CelesteAI</div>
         
         <!-- Back to Website Button -->
         <button 
@@ -82,22 +110,27 @@
         </button>
       </p>
 
+      {#if verified}
+        <div class="mb-4 rounded-lg bg-green-500/10 border border-green-500 text-green-200 px-3 py-2 text-sm">
+          ✅ Email verified successfully! You can now sign in.
+        </div>
+      {/if}
+
       {#if form?.message}
         <div class="mb-4 rounded-lg bg-red-500/10 border border-red-500 text-red-200 px-3 py-2 text-sm">{form.message}</div>
       {/if}
       
       <!-- Login Form -->
-      <form method="post" class="space-y-6">
+              <form method="post" class="space-y-6" autocomplete="off">
         <!-- Email Field -->
-        <div>
-          <input
-            name="email"
-            type="email"
-            bind:value={email}
-            placeholder="Email"
-            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors"
-          />
-        </div>
+        <input
+          name="email"
+          type="email"
+          bind:value={email}
+          placeholder="Email address"
+          autocomplete="off"
+          class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors"
+        />
         
         <!-- Password Field -->
         <div class="relative">
@@ -106,6 +139,7 @@
             type={showPassword ? 'text' : 'password'}
             bind:value={password}
             placeholder="Enter your password"
+            autocomplete="current-password"
             class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors pr-12"
           />
           <button

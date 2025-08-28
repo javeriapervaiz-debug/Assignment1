@@ -11,12 +11,12 @@
 </script>
 
 <svelte:head>
-  <title>AMU - Capturing Moments, Creating Memories</title>
+  <title>CelesteAI - Capturing Moments, Creating Memories</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-gray-900 flex flex-col items-center justify-center p-8">
   <div class="text-center text-white mb-12">
-    <h1 class="text-6xl font-bold tracking-wider mb-4">AMU</h1>
+    <h1 class="text-6xl font-bold tracking-wider mb-4">CelesteAI</h1>
     <p class="text-2xl font-light">Capturing Moments, Creating Memories</p>
   </div>
   
@@ -37,6 +37,6 @@
   </div>
   
   <div class="mt-16 text-center text-gray-300">
-    <p class="text-lg">Welcome to AMU - Your journey starts here</p>
+    <p class="text-lg">Welcome to CelesteAI - Your journey starts here</p>
   </div>
 </div>

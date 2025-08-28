@@ -1,7 +1,7 @@
 // src/lib/auth.ts
 import { db } from "$lib/db";
-import { sessions, users } from "$lib/db/schema";
-import { and, eq, ne } from "drizzle-orm";
+import { sessions, users, verificationTokens } from "$lib/db/schema";
+import { eq } from "drizzle-orm";
 import { randomBytes, pbkdf2Sync } from "crypto";
 import type { RequestEvent } from "@sveltejs/kit";
 
@@ -41,6 +41,39 @@ export async function createUserAccount(firstName: string | null, lastName: stri
   return inserted[0];
 }
 
+// NEW: Simple verification code system
+export async function createVerificationCode(userId: number) {
+  // Generate a simple 6-digit code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expires = getExpiryDate(1); // 1 day expiry
+  
+  await db.insert(verificationTokens).values({ 
+    userId, 
+    token: code, 
+    expires, 
+    type: 'email' 
+  });
+  
+  return code;
+}
+
+export async function verifyEmailCode(code: string) {
+  const rows = await db.select().from(verificationTokens).where(eq(verificationTokens.token, code));
+  if (rows.length === 0) throw new Error("Invalid verification code");
+  
+  const verification = rows[0];
+  if (verification.type !== 'email') throw new Error("Invalid code type");
+  if (new Date(verification.expires) < new Date()) throw new Error("Verification code expired");
+  
+  // Mark email as verified
+  await db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, verification.userId));
+  
+  // Delete the used code
+  await db.delete(verificationTokens).where(eq(verificationTokens.token, code));
+  
+  return verification.userId;
+}
+
 export async function createSession(userId: number) {
   const token = randomBytes(32).toString("hex");
   const expires = getExpiryDate(SESSION_TTL_DAYS);
@@ -77,19 +110,10 @@ export async function signInWithEmail(event: RequestEvent, email: string, passwo
   if (res.length === 0) throw new Error("Invalid email or password");
   const user = res[0];
   if (!verifyPassword(password, user.passwordHash)) throw new Error("Invalid email or password");
-  const { token, expires } = await createSession(user.id);
-  event.cookies.set(SESSION_COOKIE, token, {
-    path: "/",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,
-    expires
-  });
-  return user;
-}
-
-export async function registerAndSignIn(event: RequestEvent, firstName: string | null, lastName: string | null, email: string, password: string) {
-  const user = await createUserAccount(firstName, lastName, email, password);
+  
+  // Only require email verification for new accounts that haven't been verified yet
+  if (!user.emailVerifiedAt) throw new Error("Please verify your email before signing in. Use the verification code from your registration.");
+  
   const { token, expires } = await createSession(user.id);
   event.cookies.set(SESSION_COOKIE, token, {
     path: "/",
@@ -119,7 +143,7 @@ export async function updateUserProfile(
       const exists = await db
         .select()
         .from(users)
-        .where(and(eq(users.email, updates.email), ne(users.id, userId)));
+        .where(eq(users.email, updates.email), eq(users.id, userId));
       if (exists.length > 0) throw new Error("Email already in use");
     }
     values.email = updates.email ?? null;

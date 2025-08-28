@@ -13,6 +13,12 @@ export const handle: Handle = async ({ event, resolve }) => {
         headers: { Location: '/auth/login' }
       });
     }
+    if (!event.locals.user.emailVerifiedAt) {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: '/auth/verify?required=1' }
+      });
+    }
   }
 
   return resolve(event);
