@@ -163,3 +163,39 @@ export async function deleteUserAccount(event: RequestEvent, userId: number) {
   await db.delete(users).where(eq(users.id, userId));
   event.cookies.delete(SESSION_COOKIE, { path: "/" });
 }
+
+// OAuth helpers
+export async function findOrCreateOAuthUser(email: string, firstName: string | null, lastName: string | null, profileImageUrl: string | null = null) {
+  // First, try to find existing user by email
+  const existing = await db.select().from(users).where(eq(users.email, email));
+  
+  if (existing.length > 0) {
+    // User exists, return them
+    return existing[0];
+  }
+  
+  // User doesn't exist, create a new one
+  // For OAuth users, we'll mark email as verified since OAuth providers verify emails
+  const inserted = await db.insert(users).values({
+    firstName: firstName ?? undefined,
+    lastName: lastName ?? undefined,
+    email,
+    passwordHash: '', // OAuth users don't have passwords
+    emailVerifiedAt: new Date(), // Auto-verify OAuth emails
+    profileImageUrl: profileImageUrl ?? undefined
+  }).returning();
+  
+  return inserted[0];
+}
+
+export async function signInOAuthUser(event: RequestEvent, user: any) {
+  const { token, expires } = await createSession(user.id);
+  event.cookies.set(SESSION_COOKIE, token, {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false,
+    expires
+  });
+  return user;
+}

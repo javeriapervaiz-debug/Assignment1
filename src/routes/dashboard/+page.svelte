@@ -1,6 +1,29 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { page } from '$app/stores';
+  import { onMount } from 'svelte';
+  
   export let data: { user: any };
+  
+  let showOAuthWelcome = false;
+  let oauthProvider = '';
+  
+  onMount(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('welcome') === '1' && urlParams.get('oauth')) {
+      showOAuthWelcome = true;
+      oauthProvider = urlParams.get('oauth') || '';
+      
+      // Remove URL parameters after showing welcome
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('oauth');
+        url.searchParams.delete('welcome');
+        window.history.replaceState({}, '', url.toString());
+        showOAuthWelcome = false;
+      }, 5000);
+    }
+  });
 
   let firstName = data.user?.firstName || '';
   let lastName = data.user?.lastName || '';
@@ -20,6 +43,23 @@
 </script>
 
 <div class="min-h-screen bg-gray-950 text-white p-6 md:p-12">
+  <!-- OAuth Welcome Banner -->
+  {#if showOAuthWelcome}
+    <div class="mb-6 bg-green-500/10 border border-green-500 rounded-lg p-4 text-center">
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <h2 class="text-xl font-bold text-green-400">Welcome!</h2>
+      </div>
+      <p class="text-green-200">
+        Successfully signed in with 
+        <span class="font-semibold capitalize">{oauthProvider}</span>! 
+        Your account has been created and you're now logged in.
+      </p>
+    </div>
+  {/if}
+  
   <h1 class="text-3xl font-bold mb-6">Profile</h1>
 
   <div class="grid md:grid-cols-3 gap-6">
