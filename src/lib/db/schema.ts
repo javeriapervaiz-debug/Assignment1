@@ -8,7 +8,12 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   emailVerifiedAt: timestamp("email_verified_at"),
-  createdAt: timestamp("created_at").defaultNow()
+  role: varchar("role", { length: 20 }).notNull().default("user"), // 'user' or 'admin'
+  status: varchar("status", { length: 20 }).notNull().default("active"), // 'active', 'disabled', 'pending'
+  profileImageUrl: varchar("profile_image_url", { length: 500 }),
+  lastLoginAt: timestamp("last_login_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const sessions = pgTable("sessions", {

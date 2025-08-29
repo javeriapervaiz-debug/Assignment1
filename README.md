@@ -1,38 +1,73 @@
-# sv
+# Auth App with Role-Based Access Control
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A comprehensive authentication system built with SvelteKit, featuring user registration, email verification, OAuth integration, and admin dashboard with role-based access control.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- 📧 **Email Authentication**: Registration, login, email verification
+- 🔐 **OAuth Integration**: Google and GitHub sign-in
+- 👑 **Role-Based Access**: Admin and user roles with different permissions
+- 📊 **Admin Dashboard**: User management, analytics, and administrative controls
+- 💬 **AI Chat Interface**: Modern chatbot-style UI (ready for AI integration)
+- 🎨 **Modern UI**: Dark theme with Tailwind CSS
 
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ 
+- PostgreSQL database
+- pnpm (preferred package manager)
+
+### Installation
+
+1. **Install dependencies:**
 ```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+pnpm install
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
+2. **Set up environment variables:**
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+cp .env.example .env
+# Edit .env with your database and OAuth credentials
 ```
 
-## Building
-
-To create a production version of your app:
-
+3. **Apply database migrations:**
 ```sh
-npm run build
+node scripts/apply-sql.cjs drizzle/0005_add_missing_rbac_columns.sql
 ```
 
-You can preview the production build with `npm run preview`.
+4. **Start development server:**
+```sh
+pnpm dev
+```
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+### Development Commands
+
+```sh
+# Start development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Preview production build
+pnpm preview
+
+# Run type checking
+pnpm check
+
+# Format code
+pnpm format
+```
+
+## Usage
+
+1. **Visit** `http://localhost:5173`
+2. **Register** a new account or use OAuth
+3. **Verify email** with the code sent to your inbox
+4. **Access admin panel** (if you're an admin user)
+
+## Admin Access
+
+The first user with email `javeria.pq@gmail.com` is automatically set as admin. Admins can access the admin panel through the profile dropdown.

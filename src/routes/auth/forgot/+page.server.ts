@@ -1,18 +1,36 @@
 import { fail, type Actions } from '@sveltejs/kit';
-import { createPasswordResetToken, generateResetLink } from '$lib/auth';
+import { createPasswordResetToken } from '$lib/auth';
 
 export const actions: Actions = {
-  default: async ({ request, url }) => {
+  default: async ({ request }) => {
     const data = await request.formData();
-    const email = String(data.get('email') || '');
-    if (!email) return fail(400, { message: 'Email is required' });
-    const res = await createPasswordResetToken(email);
-    if (res) {
-      const link = generateResetLink(url.origin, res.token);
-      console.log('Reset link:', link);
+    const email = String(data.get('email') || '').trim();
+
+    if (!email) {
+      return fail(400, { error: 'Email is required', email: '' });
     }
-    return { message: 'If that account exists, a reset link has been sent.' };
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return fail(400, { error: 'Please enter a valid email address', email });
+    }
+
+    const result = await createPasswordResetToken(email);
+    
+    if (!result.success) {
+      // Don't reveal if email exists or not for security
+      return { 
+        success: true, 
+        message: 'If an account with this email exists, you will receive password reset instructions shortly.',
+        email
+      };
+    }
+
+    return { 
+      success: true, 
+      message: 'Password reset code sent to your email. Please check your inbox.',
+      email
+    };
   }
 };
-
-

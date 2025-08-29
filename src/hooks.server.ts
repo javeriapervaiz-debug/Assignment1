@@ -1,5 +1,9 @@
 import type { Handle } from '@sveltejs/kit';
 import { getSession } from '$lib/auth';
+import { config } from 'dotenv';
+
+// Load environment variables
+config();
 
 export const handle: Handle = async ({ event, resolve }) => {
   const session = await getSession(event);

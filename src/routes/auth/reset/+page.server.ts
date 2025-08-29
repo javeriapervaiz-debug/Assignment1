@@ -1,25 +1,109 @@
 import type { PageServerLoad, Actions } from './$types';
-import { resetPasswordByToken } from '$lib/auth';
+import { resetPasswordByCode, verifyPasswordResetCode } from '$lib/auth';
 import { fail, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ url }) => {
-  const token = url.searchParams.get('token') || undefined;
-  return { token };
+  const email = url.searchParams.get('email');
+  
+  return {
+    email
+  };
 };
 
 export const actions: Actions = {
-  default: async ({ request }) => {
+  verify: async ({ request }) => {
     const data = await request.formData();
-    const token = String(data.get('token') || '');
-    const password = String(data.get('password') || '');
-    if (!token || !password) return fail(400, { message: 'Missing data' });
-    try {
-      await resetPasswordByToken(token, password);
-    } catch (e: any) {
-      return fail(400, { message: e?.message || 'Reset failed' });
+    const email = String(data.get('email') || '').trim();
+    let code = String(data.get('code') || '').trim();
+    const backupCode = String(data.get('verification_code') || '').trim();
+
+    // Use backup code if main code is empty
+    if (!code && backupCode) {
+      code = backupCode;
     }
-    throw redirect(302, '/auth/login');
+
+    if (!email || !code) {
+      return fail(400, { 
+        error: 'Email and verification code are required',
+        email: email || '',
+        code: code || ''
+      });
+    }
+
+    const result = await verifyPasswordResetCode(email, code);
+    
+    if (!result.success) {
+      return fail(400, { 
+        error: result.error || 'Invalid or expired verification code',
+        email,
+        code
+      });
+    }
+
+    return { 
+      success: true, 
+      verified: true,
+      email,
+      code
+    };
+  },
+
+  reset: async ({ request }) => {
+    const data = await request.formData();
+    const email = String(data.get('email') || '').trim();
+    const code = String(data.get('code') || '').trim();
+    let password = String(data.get('password') || '');
+    let confirmPassword = String(data.get('confirmPassword') || '');
+    const backupPassword = String(data.get('backup_password') || '');
+    const backupConfirmPassword = String(data.get('backup_confirmPassword') || '');
+
+    // Use backup passwords if main passwords are empty
+    if (!password && backupPassword) {
+      password = backupPassword;
+    }
+    if (!confirmPassword && backupConfirmPassword) {
+      confirmPassword = backupConfirmPassword;
+    }
+
+    if (!email || !code || !password || !confirmPassword) {
+      return fail(400, { 
+        error: 'All fields are required',
+        email,
+        code,
+        verified: true
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return fail(400, { 
+        error: 'Passwords do not match',
+        email,
+        code,
+        verified: true
+      });
+    }
+
+    if (password.length < 8) {
+      return fail(400, { 
+        error: 'Password must be at least 8 characters long',
+        email,
+        code,
+        verified: true
+      });
+    }
+
+    const result = await resetPasswordByCode(email, code, password);
+    
+    if (!result.success) {
+      return fail(400, { 
+        error: 'error' in result ? result.error : 'Password reset failed',
+        email,
+        code,
+        verified: true
+      });
+    }
+
+    // Redirect to login with success message
+    throw redirect(302, '/auth/login?reset=success');
   }
 };
-
-

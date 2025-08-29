@@ -13,6 +13,7 @@
   const leftImageUrl = '/images/pic1.jpg';
   
   $: verified = $page.url.searchParams.get('verified');
+  $: passwordReset = $page.url.searchParams.get('reset');
   
   // Clear form fields when component mounts
   onMount(() => {
@@ -113,6 +114,12 @@
       {#if verified}
         <div class="mb-4 rounded-lg bg-green-500/10 border border-green-500 text-green-200 px-3 py-2 text-sm">
           ✅ Email verified successfully! You can now sign in.
+        </div>
+      {/if}
+
+      {#if passwordReset === 'success'}
+        <div class="mb-4 rounded-lg bg-green-500/10 border border-green-500 text-green-200 px-3 py-2 text-sm">
+          ✅ Password reset successfully! You can now sign in with your new password.
         </div>
       {/if}
 
